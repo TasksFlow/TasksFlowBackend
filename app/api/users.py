@@ -2,14 +2,24 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_active_user, get_current_admin_user
+from app.core.deps import get_current_active_user
+from app.core.auth_decorators import (
+    authenticated_required,
+    user_read_required,
+    user_create_required,
+    user_update_required,
+    user_delete_required,
+    password_reset_required,
+    self_or_admin_required
+)
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user import (
     UserCreate,
     UserResponse,
     UserUpdate,
-    UserChangePassword
+    UserChangePassword,
+    UserResetPassword
 )
 from app.utils.user import (
     get_user,
@@ -18,6 +28,7 @@ from app.utils.user import (
     update_user,
     delete_user,
     change_user_password,
+    reset_user_password,
     is_username_taken,
     is_email_taken
 )
@@ -26,6 +37,7 @@ router = APIRouter()
 
 
 @router.get("/me", response_model=UserResponse)
+@authenticated_required
 def read_user_me(
     current_user: User = Depends(get_current_active_user)
 ) -> Any:
@@ -36,6 +48,7 @@ def read_user_me(
 
 
 @router.put("/me", response_model=UserResponse)
+@authenticated_required
 def update_user_me(
     *,
     db: Session = Depends(get_db),
@@ -68,6 +81,7 @@ def update_user_me(
 
 
 @router.post("/me/change-password")
+@authenticated_required
 def change_password_me(
     *,
     db: Session = Depends(get_db),
@@ -89,11 +103,12 @@ def change_password_me(
 
 
 @router.get("/", response_model=List[UserResponse])
+@user_read_required
 def read_users(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ) -> Any:
     """
     Retrieve users (Admin only)
@@ -103,11 +118,12 @@ def read_users(
 
 
 @router.post("/", response_model=UserResponse)
+@user_create_required
 def create_user_by_admin(
     *,
     db: Session = Depends(get_db),
     user_in: UserCreate,
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ) -> Any:
     """
     Create new user (Admin only)
@@ -131,13 +147,14 @@ def create_user_by_admin(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
+@self_or_admin_required()
 def read_user_by_id(
     user_id: int,
-    current_user: User = Depends(get_current_admin_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ) -> Any:
     """
-    Get a specific user by id (Admin only)
+    Get a specific user by id (Self or Admin only)
     """
     user = get_user(db, user_id)
     if not user:
@@ -149,15 +166,16 @@ def read_user_by_id(
 
 
 @router.put("/{user_id}", response_model=UserResponse)
+@self_or_admin_required()
 def update_user_by_id(
     *,
     db: Session = Depends(get_db),
     user_id: int,
     user_in: UserUpdate,
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ) -> Any:
     """
-    Update a user (Admin only)
+    Update a user (Self or Admin only)
     """
     user = get_user(db, user_id)
     if not user:
@@ -185,11 +203,12 @@ def update_user_by_id(
 
 
 @router.delete("/{user_id}")
+@user_delete_required
 def delete_user_by_id(
     *,
     db: Session = Depends(get_db),
     user_id: int,
-    current_user: User = Depends(get_current_admin_user)
+    current_user: User = Depends(get_current_active_user)
 ) -> Any:
     """
     Delete a user (Admin only)
@@ -210,3 +229,33 @@ def delete_user_by_id(
     
     delete_user(db, user_id)
     return {"message": "User deleted successfully"}
+
+
+@router.post("/{user_id}/reset-password")
+@password_reset_required
+def reset_user_password_by_id(
+    *,
+    db: Session = Depends(get_db),
+    user_id: int,
+    password_data: UserResetPassword,
+    current_user: User = Depends(get_current_active_user)
+) -> Any:
+    """
+    Reset a user's password (Admin only)
+    """
+    user = get_user(db, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # 不能重置自己的密码（应该使用修改密码接口）
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot reset your own password. Use change password instead."
+        )
+    
+    reset_user_password(db, user_id, password_data.new_password)
+    return {"message": "Password reset successfully"}

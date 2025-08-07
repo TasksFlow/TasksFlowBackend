@@ -94,6 +94,13 @@ def change_user_password(db: Session, user: User, old_password: str, new_passwor
     return True
 
 
+def reset_user_password(db: Session, user: User, new_password: str) -> bool:
+    """重置用户密码（管理员功能）"""
+    user.hashed_password = get_password_hash(new_password)
+    db.commit()
+    return True
+
+
 def is_username_taken(db: Session, username: str, exclude_user_id: Optional[int] = None) -> bool:
     """检查用户名是否已被使用"""
     query = db.query(User).filter(User.username == username)

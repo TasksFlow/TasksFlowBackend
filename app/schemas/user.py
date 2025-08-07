@@ -26,6 +26,10 @@ class UserChangePassword(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=50, description="新密码")
 
 
+class UserResetPassword(BaseModel):
+    new_password: str = Field(..., min_length=6, max_length=50, description="新密码")
+
+
 class UserResponse(UserBase):
     id: int
     role: UserRole
