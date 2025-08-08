@@ -9,6 +9,28 @@ from .user import (
     TokenData,
 )
 
+from .monitoring import (
+    SystemMetricsBase,
+    SystemMetricsCreate,
+    SystemMetricsResponse,
+    GPUMetricsBase,
+    GPUMetricsCreate,
+    GPUMetricsResponse,
+    TaskMetricsBase,
+    TaskMetricsCreate,
+    TaskMetricsResponse,
+    MonitoringAlertBase,
+    MonitoringAlertCreate,
+    MonitoringAlertUpdate,
+    MonitoringAlertResponse,
+    SystemOverviewResponse,
+    MetricsQueryParams,
+    MetricsHistoryResponse,
+    AlertLevel,
+    AlertType,
+    AlertStatus,
+)
+
 __all__ = [
     "UserBase",
     "UserCreate", 
@@ -18,4 +40,24 @@ __all__ = [
     "UserLogin",
     "Token",
     "TokenData",
+    # 监控相关
+    "SystemMetricsBase",
+    "SystemMetricsCreate",
+    "SystemMetricsResponse",
+    "GPUMetricsBase",
+    "GPUMetricsCreate",
+    "GPUMetricsResponse",
+    "TaskMetricsBase",
+    "TaskMetricsCreate",
+    "TaskMetricsResponse",
+    "MonitoringAlertBase",
+    "MonitoringAlertCreate",
+    "MonitoringAlertUpdate",
+    "MonitoringAlertResponse",
+    "SystemOverviewResponse",
+    "MetricsQueryParams",
+    "MetricsHistoryResponse",
+    "AlertLevel",
+    "AlertType",
+    "AlertStatus",
 ]

@@ -33,6 +33,7 @@ async def startup_event():
     # 创建数据库表
     create_tables()
     print("Application started successfully")
+    print("Note: 监控数据收集现在由独立进程处理，请使用 ./start_monitoring.sh start 启动")
 
 
 @app.on_event("shutdown")

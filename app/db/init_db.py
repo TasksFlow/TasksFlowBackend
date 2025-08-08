@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.database import engine, Base
 from app.models.user import User, UserRole
+from app.models.monitoring import SystemMetrics, GPUMetrics, TaskMetrics, MonitoringAlert  # 导入监控模型
 from app.utils.user import get_user_by_username, create_user
 from app.schemas.user import UserCreate
 
